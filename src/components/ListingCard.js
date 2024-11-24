@@ -7,7 +7,7 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
 
   const handleUpdate = () => {
     // In a real app, you'd open a form to edit the listing
-    const updatedListing = { ...listing, title: `${listing.title} (Updated)` };
+    const updatedListing = { ...listing, title: `${listing.title}  ` };
     onUpdate(updatedListing);
   };
 
@@ -28,7 +28,9 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
 
   return (
     <div className="border p-4 rounded shadow-md hover:shadow-lg transition-shadow">
-      <h3 className=" text-slate-00 font-bold text-lg mb-2">{listing.title}</h3>
+      <h3 className=" text-slate-900 font-bold text-lg mb-2">
+        {listing.title}
+      </h3>
       <p className="text-gray-600 mb-2">Location: {listing.location}</p>
       <p className="text-green-600 font-semibold mb-2">
         Price: ${listing.price}/month
