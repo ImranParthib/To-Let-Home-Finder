@@ -1,6 +1,6 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
   const [showContactForm, setShowContactForm] = useState(false);
@@ -12,7 +12,7 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this listing?')) {
+    if (window.confirm("Are you sure you want to delete this listing?")) {
       onDelete(listing.id);
     }
   };
@@ -20,19 +20,26 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
   const handleContactSubmit = (e) => {
     e.preventDefault();
     // In a real app, you'd send this data to your backend
-    alert('Message sent to landlord!');
+    alert("Message sent to landlord!");
     setShowContactForm(false);
   };
+
+  console.log(listing);
 
   return (
     <div className="border p-4 rounded shadow-md hover:shadow-lg transition-shadow">
       <h3 className=" text-slate-00 font-bold text-lg mb-2">{listing.title}</h3>
       <p className="text-gray-600 mb-2">Location: {listing.location}</p>
-      <p className="text-green-600 font-semibold mb-2">Price: ${listing.price}/month</p>
-      <p className="text-sm text-gray-500 mb-2">{listing.propertyType} | {listing.bedrooms} bed | {listing.bathrooms} bath</p>
+      <p className="text-green-600 font-semibold mb-2">
+        Price: ${listing.price}/month
+      </p>
+      <p className="text-sm text-gray-500 mb-2">
+        {listing.propertyType} | {listing.bedrooms} bed | {listing.bathrooms}{" "}
+        bath
+      </p>
       <div className="grid grid-cols-2 gap-2 mb-4">
         {listing.images.slice(0, 2).map((image, index) => (
-          <Image 
+          <Image
             key={index}
             src={image}
             alt={`Listing image ${index + 1}`}
@@ -42,11 +49,14 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
           />
         ))}
       </div>
-      <Link href={`/property/${listing.id}`} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full mb-2 block text-center">
+      <Link
+        href={`/property/${listing.id}`}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full mb-2 block text-center"
+      >
         View Details
       </Link>
-      <button 
-        onClick={() => setShowContactForm(true)} 
+      <button
+        onClick={() => setShowContactForm(true)}
         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full mb-2"
       >
         Contact Now
@@ -71,17 +81,26 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
             rows="3"
             required
           ></textarea>
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+          >
             Send Message
           </button>
         </form>
       )}
       {isAdmin && (
         <div className="flex justify-between mt-2">
-          <button onClick={handleUpdate} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+          <button
+            onClick={handleUpdate}
+            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+          >
             Update
           </button>
-          <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
             Delete
           </button>
         </div>
