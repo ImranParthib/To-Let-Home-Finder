@@ -6,8 +6,8 @@ const cors = require("cors");
 app.use(cors());
 
 //mongodb connection
-const mongoUrl =
-  "mongodb+srv://adarsh:adarsh@cluster0.zllye.mongodb.net/?retryWrites=true&w=majority";
+const mongoUrl ="mongodb+srv://ImranParthib:GFeVvvh60i28DlsE@cluster0.ghbq7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  
 
 mongoose
   .connect(mongoUrl, {
