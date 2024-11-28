@@ -1,12 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const ImageDetailsScehma = new mongoose.Schema(
-  {
-    image: String,
-  },
-  {
-    collection: "ImageDetails",
+const imageDetailsSchema = new mongoose.Schema({
+  images: {
+    type: [String],
+    required: true
   }
-);
+});
 
-mongoose.model("ImageDetails", ImageDetailsScehma);
+mongoose.model('ImageDetails', imageDetailsSchema);

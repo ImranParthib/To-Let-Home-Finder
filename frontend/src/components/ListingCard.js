@@ -6,7 +6,6 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
   const [showContactForm, setShowContactForm] = useState(false);
 
   const handleUpdate = () => {
-    // In a real app, you'd open a form to edit the listing
     const updatedListing = { ...listing, title: `${listing.title}  ` };
     onUpdate(updatedListing);
   };
@@ -19,16 +18,13 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
-    // In a real app, you'd send this data to your backend
     alert("Message sent to landlord!");
     setShowContactForm(false);
   };
 
-  console.log(listing);
-
   return (
     <div className="border p-4 rounded shadow-md hover:shadow-lg transition-shadow">
-      <h3 className=" text-slate-900 font-bold text-lg mb-2">
+      <h3 className="text-slate-900 font-bold text-lg mb-2">
         {listing.title}
       </h3>
       <p className="text-gray-600 mb-2">Location: {listing.location}</p>
@@ -36,14 +32,13 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
         Price: ${listing.price}/month
       </p>
       <p className="text-sm text-gray-500 mb-2">
-        {listing.propertyType} | {listing.bedrooms} bed | {listing.bathrooms}{" "}
-        bath
+        {listing.propertyType} | {listing.bedrooms} bed | {listing.bathrooms} bath
       </p>
       <div className="grid grid-cols-2 gap-2 mb-4">
-        {listing.images.slice(0, 2).map((image, index) => (
+        {listing.images.map((image, index) => (
           <Image
             key={index}
-            src={image}
+            src={`http://localhost:5000/images/${image}`}
             alt={`Listing image ${index + 1}`}
             width={150}
             height={150}
@@ -51,11 +46,10 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
           />
         ))}
       </div>
-      <Link
-        href={`/property/${listing.id}`}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full mb-2 block text-center"
-      >
-        View Details
+      <Link href={`/property/${listing.id}`} legacyBehavior>
+        <a className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full mb-2 block text-center">
+          View Details
+        </a>
       </Link>
       <button
         onClick={() => setShowContactForm(true)}
