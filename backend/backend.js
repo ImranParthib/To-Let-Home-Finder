@@ -3,13 +3,13 @@ const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");
 const multer = require("multer");
-require('dotenv').config(); // Load environment variables
+require("dotenv").config(); // Load environment variables
 
 app.use(express.json());
 app.use(cors());
 
 // Serve static files from the images directory inside the frontend folder
-app.use('/images', express.static('/images')); // Serve images from this directory
+app.use("/images", express.static("../frontend/src/images")); // Serve images from this directory
 
 // MongoDB connection
 const mongoUrl = process.env.MONGODB_URI;
@@ -31,7 +31,7 @@ app.get("/", async (req, res) => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "images/"); // Ensure this path is correct
+    cb(null, "../frontend/src/images"); // Ensure this path is correct
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now();
@@ -43,7 +43,7 @@ const upload = multer({ storage: storage });
 
 app.post("/upload-image", upload.array("images", 2), async (req, res) => {
   console.log(req.body);
-  const imageNames = req.files.map(file => file.filename);
+  const imageNames = req.files.map((file) => file.filename);
 
   try {
     await Images.create({ images: imageNames });

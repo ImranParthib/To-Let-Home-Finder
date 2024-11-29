@@ -57,11 +57,15 @@ export default function NewListingForm({ onSubmit }) {
     });
 
     try {
-      const response = await axios.post("http://localhost:5000/upload-image", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        "http://localhost:5000/upload-image",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       console.log(response.data);
       onSubmit(formData);
       getImages(); // Refresh the list of images after upload
