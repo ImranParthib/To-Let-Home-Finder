@@ -1,41 +1,35 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
-export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
-  const [showContactForm, setShowContactForm] = useState(false);
-
-  const handleUpdate = () => {
-    const updatedListing = { ...listing, title: `${listing.title}  ` };
-    onUpdate(updatedListing);
-  };
-
-  const handleDelete = () => {
+export default function ListingCard({ listing, onDelete }) {
+  const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this listing?")) {
-      onDelete(listing.id);
+      try {
+        const response = await fetch(`http://localhost:5000/listings/${listing._id}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        if (data.status === "ok") {
+          onDelete(listing._id);
+        } else {
+          console.error("Failed to delete listing:", data.message);
+        }
+      } catch (error) {
+        console.error("Error deleting listing:", error);
+      }
     }
-  };
-
-  const handleContactSubmit = (e) => {
-    e.preventDefault();
-    alert("Message sent to landlord!");
-    setShowContactForm(false);
   };
 
   return (
     <div className="border p-4 rounded shadow-md hover:shadow-lg transition-shadow">
-      <h3 className="text-slate-900 font-bold text-lg mb-2">
-        {listing.title}
-      </h3>
+      <h3 className="text-slate-900 font-bold text-lg mb-2">{listing.title}</h3>
       <p className="text-gray-600 mb-2">Location: {listing.location}</p>
-      <p className="text-green-600 font-semibold mb-2">
-        Price: ${listing.price}/month
-      </p>
+      <p className="text-green-600 font-semibold mb-2">Price: ${listing.price}/month</p>
       <p className="text-sm text-gray-500 mb-2">
-        {listing.propertyType} | {listing.bedrooms} bed | {listing.bathrooms} bath
+        {listing.bedrooms} bed | {listing.bathrooms} bath
       </p>
       <div className="grid grid-cols-2 gap-2 mb-4">
-        {listing.images.map((image, index) => (
+        {listing.images?.map((image, index) => (
           <Image
             key={index}
             src={`http://localhost:5000/images/${image}`}
@@ -44,63 +38,19 @@ export default function ListingCard({ listing, isAdmin, onUpdate, onDelete }) {
             height={150}
             className="object-cover w-full h-32 rounded"
           />
-        ))}
+        )) || <p>No images available</p>}
       </div>
-      <Link href={`/property/${listing.id}`} legacyBehavior>
+      <Link href={`/property/${listing._id}`} legacyBehavior>
         <a className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full mb-2 block text-center">
           View Details
         </a>
       </Link>
       <button
-        onClick={() => setShowContactForm(true)}
-        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full mb-2"
+        onClick={handleDelete}
+        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 w-full mb-2"
       >
-        Contact Now
+        Delete
       </button>
-      {showContactForm && (
-        <form onSubmit={handleContactSubmit} className="mt-4">
-          <input
-            type="text"
-            placeholder="Your Name"
-            className="w-full border rounded p-2 mb-2"
-            required
-          />
-          <input
-            type="email"
-            placeholder="Your Email"
-            className="w-full border rounded p-2 mb-2"
-            required
-          />
-          <textarea
-            placeholder="Your Message"
-            className="w-full border rounded p-2 mb-2"
-            rows="3"
-            required
-          ></textarea>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
-          >
-            Send Message
-          </button>
-        </form>
-      )}
-      {isAdmin && (
-        <div className="flex justify-between mt-2">
-          <button
-            onClick={handleUpdate}
-            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-          >
-            Update
-          </button>
-          <button
-            onClick={handleDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-        </div>
-      )}
     </div>
   );
 }

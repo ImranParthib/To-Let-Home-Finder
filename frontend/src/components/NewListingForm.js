@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 
 export default function NewListingForm({ onSubmit }) {
@@ -14,11 +14,6 @@ export default function NewListingForm({ onSubmit }) {
   });
 
   const [error, setError] = useState("");
-  const [allImages, setAllImages] = useState([]);
-
-  useEffect(() => {
-    getImages();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -52,178 +47,74 @@ export default function NewListingForm({ onSubmit }) {
     }
 
     const formDataToSend = new FormData();
-    formData.images.forEach((image) => {
-      formDataToSend.append("images", image);
-    });
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("location", formData.location);
+    formDataToSend.append("price", formData.price);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("bedrooms", formData.bedrooms);
+    formDataToSend.append("bathrooms", formData.bathrooms);
+    formDataToSend.append("amenities", JSON.stringify(formData.amenities));
+
+    formDataToSend.append("images", formData.images[0]);
+    formDataToSend.append("images", formData.images[1]);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/upload-image",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post("http://localhost:5000/upload-listing", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       console.log(response.data);
-      onSubmit(formData);
-      getImages(); // Refresh the list of images after upload
+      onSubmit(response.data); // Call the onSubmit prop with the response data
     } catch (error) {
-      console.error("Error uploading image:", error);
-      setError("Image upload failed.");
-    }
-  };
-
-  const getImages = async () => {
-    try {
-      const result = await axios.get("http://localhost:5000/get-image");
-      console.log(result);
-      setAllImages(result.data.data);
-    } catch (error) {
-      console.error("Error fetching images:", error);
+      console.error("Error uploading listing:", error);
+      setError("Listing upload failed.");
     }
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block mb-1 text-gray-700">
-            Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="location" className="block mb-1 text-gray-700">
-            Location
-          </label>
-          <input
-            type="text"
-            id="location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="price" className="block mb-1 text-gray-700">
-            Price (per month)
-          </label>
-          <input
-            type="number"
-            id="price"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block mb-1 text-gray-700">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            rows="4"
-            required
-          ></textarea>
-        </div>
-        <div>
-          <label htmlFor="bedrooms" className="block mb-1 text-gray-700">
-            Bedrooms
-          </label>
-          <input
-            type="number"
-            id="bedrooms"
-            name="bedrooms"
-            value={formData.bedrooms}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="bathrooms" className="block mb-1 text-gray-700">
-            Bathrooms
-          </label>
-          <input
-            type="number"
-            id="bathrooms"
-            name="bathrooms"
-            value={formData.bathrooms}
-            onChange={handleChange}
-            className="w-full border rounded p-2 text-gray-800"
-            required
-          />
-        </div>
-        <div>
-          <label className="block mb-1 text-gray-700">Amenities</label>
-          <div className="space-y-2">
-            {["Parking", "Wifi", "Gym", "Pool"].map((amenity) => (
-              <label key={amenity} className="flex items-center text-gray-700">
-                <input
-                  type="checkbox"
-                  name={amenity}
-                  checked={formData.amenities.includes(amenity)}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                {amenity}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label htmlFor="images" className="block mb-1 text-gray-700">
-            Images
-          </label>
-          <input
-            type="file"
-            id="images"
-            name="images"
-            onChange={handleImageUpload}
-            className="w-full border rounded p-2 text-gray-800"
-            multiple
-            accept="image/*"
-          />
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-        <button
-          type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-        >
-          Submit Listing
-        </button>
-      </form>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Uploaded Images</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {allImages.map((data) => (
-            <img
-              key={data._id}
-              src={`http://localhost:5000/images/${data.image}`}
-              alt="Uploaded"
-              className="object-cover w-full h-32 rounded"
-            />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="title" className="block mb-1 text-gray-700">Title</label>
+        <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" required />
+      </div>
+      <div>
+        <label htmlFor="location" className="block mb-1 text-gray-700">Location</label>
+        <input type="text" id="location" name="location" value={formData.location} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" required />
+      </div>
+      <div>
+        <label htmlFor="price" className="block mb-1 text-gray-700">Price (per month)</label>
+        <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" required />
+      </div>
+      <div>
+        <label htmlFor="description" className="block mb-1 text-gray-700">Description</label>
+        <textarea id="description" name="description" value={formData.description} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" rows="4" required></textarea>
+      </div>
+      <div>
+        <label htmlFor="bedrooms" className="block mb-1 text-gray-700">Bedrooms</label>
+        <input type="number" id="bedrooms" name="bedrooms" value={formData.bedrooms} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" required />
+      </div>
+      <div>
+        <label htmlFor="bathrooms" className="block mb-1 text-gray-700">Bathrooms</label>
+        <input type="number" id="bathrooms" name="bathrooms" value={formData.bathrooms} onChange={handleChange} className="w-full border rounded p-2 text-gray-800" required />
+      </div>
+      <div>
+        <label className="block mb-1 text-gray-700">Amenities</label>
+        <div className="space-y-2">
+          {["Parking", "Wifi", "Gym", "Pool"].map((amenity) => (
+            <label key={amenity} className="flex items-center text-gray-700">
+              <input type="checkbox" name={amenity} checked={formData.amenities.includes(amenity)} onChange={handleChange} className="mr-2" />
+              {amenity}
+            </label>
           ))}
         </div>
       </div>
-    </div>
+      <div>
+        <label htmlFor="images" className="block mb-1 text-gray-700">Images</label>
+        <input type="file" id="images" name="images" onChange={handleImageUpload} className="w-full border rounded p-2 text-gray-800" multiple accept="image/*" />
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Submit Listing</button>
+    </form>
   );
 }
