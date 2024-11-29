@@ -23,7 +23,7 @@ const generateSampleListings = (count) => {
       ],
       bedrooms: Math.floor(Math.random() * 3) + 1,
       bathrooms: Math.floor(Math.random() * 2) + 1,
-      images: ["/sample-home-image.jpg", "/sample-home-image-2.jpg"],
+      images: ["sample-home-image.jpg", "sample-home-image-2.jpg"],
       amenities: ["Parking", "Wifi", "Gym", "Pool"].slice(
         0,
         Math.floor(Math.random() * 4) + 1
