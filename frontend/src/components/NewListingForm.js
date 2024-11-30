@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function NewListingForm({ onSubmit }) {
+export default function NewListingForm({ onSubmit, isAuthenticated, onShowAuth }) {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
@@ -41,6 +41,12 @@ export default function NewListingForm({ onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      onShowAuth();
+      return;
+    }
+
     if (formData.images.length !== 2) {
       setError("Please upload exactly two images.");
       return;
@@ -59,18 +65,34 @@ export default function NewListingForm({ onSubmit }) {
     formDataToSend.append("images", formData.images[1]);
 
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.post("http://localhost:5000/upload-listing", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${token}`
         },
       });
       console.log(response.data);
-      onSubmit(response.data); // Call the onSubmit prop with the response data
+      onSubmit(response.data);
     } catch (error) {
       console.error("Error uploading listing:", error);
       setError("Listing upload failed.");
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-500">Please log in to add a new listing.</p>
+        <button
+          onClick={onShowAuth}
+          className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Login / Register
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
