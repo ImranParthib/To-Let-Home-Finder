@@ -26,10 +26,16 @@ export default function AuthModal({ onClose, onLogin }) {
     try {
       const endpoint = isLogin ? '/login' : '/register';
       const response = await axios.post(`http://localhost:5000${endpoint}`, formData);
-
+      
       if (response.data.status === 'ok') {
         if (isLogin) {
-          onLogin(response.data.user);
+          const token = response.data.token;
+          localStorage.setItem('token', token);
+          
+          onLogin({
+            ...response.data.user,
+            token
+          });
           onClose();
         } else {
           setSuccessMessage('Registration successful! Please login.');

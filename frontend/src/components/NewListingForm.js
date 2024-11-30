@@ -60,23 +60,39 @@ export default function NewListingForm({ onSubmit, isAuthenticated, onShowAuth }
     formDataToSend.append("bedrooms", formData.bedrooms);
     formDataToSend.append("bathrooms", formData.bathrooms);
     formDataToSend.append("amenities", JSON.stringify(formData.amenities));
-
     formDataToSend.append("images", formData.images[0]);
     formDataToSend.append("images", formData.images[1]);
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post("http://localhost:5000/upload-listing", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${token}`
-        },
-      });
-      console.log(response.data);
-      onSubmit(response.data);
+      if (!token) {
+        setError("Authentication token not found. Please login again.");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:5000/upload-listing",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.status === "ok") {
+        onSubmit(response.data.newListing);
+      } else {
+        setError("Failed to upload listing");
+      }
     } catch (error) {
       console.error("Error uploading listing:", error);
-      setError("Listing upload failed.");
+      if (error.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+      } else {
+        setError(error.response?.data?.message || "Listing upload failed.");
+      }
     }
   };
 

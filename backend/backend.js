@@ -41,25 +41,46 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Add authentication middleware
+// Update the authentication middleware
 const authenticateUser = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ status: "error", message: "No authorization header" });
-  }
-
   try {
-    // Get the token from the header
-    const token = authHeader.split(' ')[1];
-    // Verify the token and get user data
-    const user = await User.findById(token);
-    if (!user) {
-      return res.status(401).json({ status: "error", message: "Invalid token" });
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        status: "error",
+        message: "No authorization token provided"
+      });
     }
+
+    const token = authHeader.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid authorization token"
+      });
+    }
+
+    // Find user by token (which is the user ID in this case)
+    const user = await User.findById(token);
+    
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        message: "User not found"
+      });
+    }
+
+    // Attach user to request object
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ status: "error", message: "Invalid token" });
+    console.error("Authentication error:", error);
+    return res.status(401).json({
+      status: "error",
+      message: "Authentication failed"
+    });
   }
 };
 
@@ -101,53 +122,52 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// User Login endpoint
+// Update the login endpoint
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    // Find user
     const user = await User.findOne({ username });
+    
     if (!user) {
-      return res.status(401).json({ 
-        status: "error", 
-        message: "Invalid credentials" 
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid credentials"
       });
     }
 
-    // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({ 
-        status: "error", 
-        message: "Invalid credentials" 
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid credentials"
       });
     }
 
-    // Send user data (excluding password)
+    // Send user data and token (using user._id as token)
     res.json({
       status: "ok",
       user: {
         id: user._id,
         username: user.username,
         isAdmin: user.isAdmin
-      }
+      },
+      token: user._id.toString() // Convert ObjectId to string
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ 
-      status: "error", 
-      message: "Internal Server Error" 
+    res.status(500).json({
+      status: "error",
+      message: "Internal Server Error"
     });
   }
 });
 
-// Update the upload endpoint to use authentication
+// Update the upload endpoint
 app.post("/upload-listing", authenticateUser, upload.array("images", 2), async (req, res) => {
-  const { title, location, price, description, bedrooms, bathrooms, amenities } = req.body;
-  const imageNames = req.files.map((file) => file.filename);
-
   try {
+    const { title, location, price, description, bedrooms, bathrooms, amenities } = req.body;
+    const imageNames = req.files.map((file) => file.filename);
+
     const newListing = {
       title,
       location,
@@ -157,13 +177,17 @@ app.post("/upload-listing", authenticateUser, upload.array("images", 2), async (
       bathrooms,
       amenities: JSON.parse(amenities),
       images: imageNames,
+      userId: req.user._id // Add the user ID to the listing
     };
 
-    await Listing.create(newListing);
-    res.json({ status: "ok", newListing });
+    const listing = await Listing.create(newListing);
+    res.json({ status: "ok", newListing: listing });
   } catch (error) {
     console.error("Error saving listing to database:", error);
-    res.status(500).json({ status: "error", message: "Internal Server Error" });
+    res.status(500).json({ 
+      status: "error", 
+      message: "Failed to upload listing" 
+    });
   }
 });
 
