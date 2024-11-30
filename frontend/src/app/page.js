@@ -3,15 +3,33 @@ import { useState, useEffect } from "react";
 import NewListingForm from "../components/NewListingForm";
 import ListingCard from "../components/ListingCard";
 import SearchForm from "../components/SearchForm";
+import AuthModal from "../components/AuthModal";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function Home() {
   const [showNewListingForm, setShowNewListingForm] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
 
   useEffect(() => {
+    // Check if user is already logged in
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('user');
+      }
+    }
+
+    // Fetch listings
     const fetchListings = async () => {
       try {
         const response = await fetch("http://localhost:5000/listings");
@@ -27,24 +45,35 @@ export default function Home() {
     fetchListings();
   }, []);
 
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('user');
+    setShowNewListingForm(false);
+  };
+
   const handleSearch = (searchCriteria) => {
     let filtered = [...listings];
 
-    // Filter by title
     if (searchCriteria.query) {
       filtered = filtered.filter(listing =>
         listing.title.toLowerCase().includes(searchCriteria.query.toLowerCase())
       );
     }
 
-    // Filter by location
     if (searchCriteria.location) {
       filtered = filtered.filter(listing =>
         listing.location.toLowerCase().includes(searchCriteria.location.toLowerCase())
       );
     }
 
-    // Filter by price range
     if (searchCriteria.minPrice) {
       filtered = filtered.filter(listing =>
         listing.price >= parseInt(searchCriteria.minPrice)
@@ -70,15 +99,38 @@ export default function Home() {
     setFilteredListings((prevListings) => prevListings.filter(listing => listing._id !== listingId));
   };
 
+  const handleShowNewListing = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowNewListingForm(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header
-        onShowNewListingForm={() => setShowNewListingForm(true)}
+        isAuthenticated={isAuthenticated}
+        onShowNewListingForm={handleShowNewListing}
+        onShowAuth={() => setShowAuthModal(true)}
+        user={user}
+        onLogout={handleLogout}
       />
 
       <main className="flex-grow container mx-auto p-8">
-        {showNewListingForm && (
-          <NewListingForm onSubmit={handleNewListing} />
+        {showNewListingForm && isAuthenticated && (
+          <NewListingForm 
+            onSubmit={handleNewListing} 
+            isAuthenticated={isAuthenticated}
+            onShowAuth={() => setShowAuthModal(true)}
+          />
+        )}
+
+        {showAuthModal && (
+          <AuthModal
+            onClose={() => setShowAuthModal(false)}
+            onLogin={handleLogin}
+          />
         )}
 
         <SearchForm onSearch={handleSearch} />
@@ -96,6 +148,7 @@ export default function Home() {
                   key={listing._id}
                   listing={listing}
                   onDelete={handleDeleteListing}
+                  isAuthenticated={isAuthenticated}
                 />
               ))}
             </div>

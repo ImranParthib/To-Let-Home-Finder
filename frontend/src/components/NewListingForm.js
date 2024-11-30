@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function NewListingForm({ onSubmit }) {
+export default function NewListingForm({ onSubmit, isAuthenticated, onShowAuth }) {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
@@ -41,6 +41,12 @@ export default function NewListingForm({ onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      onShowAuth();
+      return;
+    }
+
     if (formData.images.length !== 2) {
       setError("Please upload exactly two images.");
       return;
@@ -54,23 +60,55 @@ export default function NewListingForm({ onSubmit }) {
     formDataToSend.append("bedrooms", formData.bedrooms);
     formDataToSend.append("bathrooms", formData.bathrooms);
     formDataToSend.append("amenities", JSON.stringify(formData.amenities));
-
     formDataToSend.append("images", formData.images[0]);
     formDataToSend.append("images", formData.images[1]);
 
     try {
-      const response = await axios.post("http://localhost:5000/upload-listing", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log(response.data);
-      onSubmit(response.data); // Call the onSubmit prop with the response data
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError("Authentication token not found. Please login again.");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:5000/upload-listing",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.status === "ok") {
+        onSubmit(response.data.newListing);
+      } else {
+        setError("Failed to upload listing");
+      }
     } catch (error) {
       console.error("Error uploading listing:", error);
-      setError("Listing upload failed.");
+      if (error.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+      } else {
+        setError(error.response?.data?.message || "Listing upload failed.");
+      }
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-500">Please log in to add a new listing.</p>
+        <button
+          onClick={onShowAuth}
+          className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Login / Register
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
