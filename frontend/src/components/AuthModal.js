@@ -1,103 +1,130 @@
 import { useState } from 'react';
+import axios from 'axios';
 
 export default function AuthModal({ onClose, onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    username: '',
     password: '',
-    isAdmin: false
   });
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: type === 'checkbox' ? checked : value
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      // Simulate login (in a real app, you'd validate with a backend)
-      onLogin(formData);
-    } else {
-      // Simulate registration (in a real app, you'd send this to a backend)
-      console.log('Register:', formData);
-      onLogin(formData);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const endpoint = isLogin ? '/login' : '/register';
+      const response = await axios.post(`http://localhost:5000${endpoint}`, formData);
+      
+      if (response.data.status === 'ok') {
+        if (isLogin) {
+          const token = response.data.token;
+          localStorage.setItem('token', token);
+          
+          onLogin({
+            ...response.data.user,
+            token
+          });
+          onClose();
+        } else {
+          setSuccessMessage('Registration successful! Please login.');
+          setIsLogin(true);
+          setFormData({ username: '', password: '' });
+        }
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'An error occurred');
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">{isLogin ? 'Login' : 'Register'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+    <div className="fixed inset-0 bg-gradient-to-br from-blue-900/70 to-indigo-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-blue-100/20 overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02]">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 relative">
+          <h2 className="text-3xl font-bold text-white text-center tracking-tight">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white hover:rotate-90 transition-transform duration-300 p-2 rounded-full hover:bg-white/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {error && (
+            <div className="animate-shake mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="animate-bounce mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-center">
+              {successMessage}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block mb-1 text-gray-700">Name</label>
+              <label className="block text-gray-700 mb-2 font-medium">Username</label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
-                className="w-full border rounded p-2 text-gray-800"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 text-black"
                 required
+                placeholder="Enter your username"
               />
             </div>
-          )}
-          <div>
-            <label htmlFor="email" className="block mb-1 text-gray-700">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full border rounded p-2 text-gray-800"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block mb-1 text-gray-700">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border rounded p-2 text-gray-800"
-              required
-            />
-          </div>
-          {isLogin && (
-            <div className="flex items-center">
+            <div>
+              <label className="block text-gray-700 mb-2 font-medium">Password</label>
               <input
-                type="checkbox"
-                id="isAdmin"
-                name="isAdmin"
-                checked={formData.isAdmin}
+                type="password"
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                className="mr-2"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-300 text-black"
+                required
+                placeholder="Enter your password"
               />
-              <label htmlFor="isAdmin" className="text-gray-700">Login as Admin</label>
             </div>
-          )}
-          <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            {isLogin ? 'Login' : 'Register'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-gray-700">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-blue-500 hover:underline">
-            {isLogin ? 'Register' : 'Login'}
-          </button>
-        </p>
-        <button onClick={onClose} className="mt-4 w-full bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-gray-800">
-          Close
-        </button>
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+            >
+              {isLogin ? 'Login' : 'Register'}
+            </button>
+          </form>
+
+          <div className="text-center mt-6">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setSuccessMessage('');
+                setFormData({ username: '', password: '' });
+              }}
+              className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-300 hover:underline"
+            >
+              {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

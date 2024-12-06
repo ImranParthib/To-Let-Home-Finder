@@ -2,27 +2,40 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from "next/router";
 
-export default function PropertyDetails({ params }) {
+export default function PropertyDetails() {
+  const router = useRouter();
+  const { id } = router.query; // Get the listing ID from the URL
   const [property, setProperty] = useState(null);
-  const [showContactForm, setShowContactForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // In a real app, fetch the property details from an API
-    const fetchProperty = () => {
-      const listings = JSON.parse(localStorage.getItem('listings') || '[]');
-      const foundProperty = listings.find(listing => listing.id === parseInt(params.id));
-      setProperty(foundProperty);
-    };
-    fetchProperty();
-  }, [params.id]);
+    if (id) {
+      const fetchProperty = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/listings/${id}`);
+          const data = await response.json();
+          if (data.status === "ok") {
+            setProperty(data.data);
+          } else {
+            setError("Listing not found");
+          }
+        } catch (error) {
+          console.error("Error fetching listing:", error);
+          setError("Failed to fetch listing details");
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  const handleContactSubmit = (e) => {
-    e.preventDefault();
-    // In a real app, you'd send this data to your backend
-    alert('Message sent to landlord!');
-    setShowContactForm(false);
-  };
+      fetchProperty();
+    }
+  }, [id]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   if (!property) {
     return <div>Loading...</div>;
@@ -36,7 +49,7 @@ export default function PropertyDetails({ params }) {
         {property.images.map((image, index) => (
           <Image
             key={index}
-            src={image}
+            src={`http://localhost:5000/images/${image}`}
             alt={`Property image ${index + 1}`}
             width={500}
             height={300}
@@ -47,45 +60,13 @@ export default function PropertyDetails({ params }) {
       <div className="bg-gray-100 p-4 rounded mb-4">
         <p className="text-xl font-semibold text-green-600 mb-2">Price: ${property.price}/month</p>
         <p className="mb-2">Location: {property.location}</p>
-        <p className="mb-2">{property.propertyType} | {property.bedrooms} bed | {property.bathrooms} bath</p>
+        <p className="mb-2">{property.bedrooms} bed | {property.bathrooms} bath</p>
         <p className="mb-2">Amenities: {property.amenities.join(', ')}</p>
       </div>
       <div className="mb-4">
         <h2 className="text-2xl font-semibold mb-2">Description</h2>
         <p>{property.description}</p>
       </div>
-      <button 
-        onClick={() => setShowContactForm(true)} 
-        className="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600"
-      >
-        Contact Now
-      </button>
-      {showContactForm && (
-        <form onSubmit={handleContactSubmit} className="mt-4 bg-gray-100 p-4 rounded">
-          <h2 className="text-2xl font-semibold mb-4">Contact Landlord</h2>
-          <input
-            type="text"
-            placeholder="Your Name"
-            className="w-full border rounded p-2 mb-2"
-            required
-          />
-          <input
-            type="email"
-            placeholder="Your Email"
-            className="w-full border rounded p-2 mb-2"
-            required
-          />
-          <textarea
-            placeholder="Your Message"
-            className="w-full border rounded p-2 mb-2"
-            rows="4"
-            required
-          ></textarea>
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Send Message
-          </button>
-        </form>
-      )}
     </div>
   );
 }
